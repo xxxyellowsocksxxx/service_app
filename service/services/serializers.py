@@ -15,7 +15,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     email = serializers.CharField(source='client.user.email')
     price = serializers.SerializerMethodField()
 
-    # расчёт стоимости со скидкой
+    # задаёт стартовую цену подписки в аннотированное поле
     def get_price(self, instance):
         return instance.price
 

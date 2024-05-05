@@ -19,13 +19,15 @@ class SubscriptionView(ReadOnlyModelViewSet):
 
     serializer_class = SubscriptionSerializer
 
-    # изменение вывода данных
+    # изменение структуры вывода json в виде словаря списков (объект массивов)
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
         response = super().list(request, *args, **kwargs)
-        response_data = {'result': response.data}
 
+        # дефолтные данные теперь нахоядятся тут, в списке объектов
+        response_data = {'result': response.data}
+        # рассчитывается сумма оплаченых подписок
         response_data['total_cost_amoint'] = queryset\
             .aggregate(total=Sum('price')).get('total')
 
