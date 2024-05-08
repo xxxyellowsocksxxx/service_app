@@ -20,13 +20,18 @@ class Service(models.Model):
         self.__price = self.price
 
     def save(self, *args, **kwargs):
+        creating = not bool(self.id)
+        result = super().save(*args, **kwargs)
+        if creating:
+            return result
+
         # проверка на наличие изменений в цене
         if self.price != self.__price:
-            for subscription in self.subscriptions.all():
-                set_price.delay(subscription.id)
-                set_created_at.delay(subscription.id)
+            for sub in self.subscriptions.all():
+                set_price.delay(sub.id)
+                set_created_at.delay(sub.id)
 
-        return super().save(*args, **kwargs)
+        return result
 
 
 # тарифные планы скидок
@@ -51,11 +56,19 @@ class Plan(models.Model):
         self.__discount_percent = self.discount_percent
 
     def save(self, *args, **kwargs):
+        # проверка на существование объекта
+        creating = not bool(self.id)
+        # result = super().save(*args, **kwargs)
+        if creating:
+            super().save(*args, **kwargs)
+
         # проверка на наличие изменений в проценте скидки
         if self.discount_percent != self.__discount_percent:
-            for subscription in self.subscriptions.all():
-                set_price.delay(subscription.id)
-                set_created_at.delay(subscription.id)
+            for sub in self.subscriptions.all():
+                set_price.delay(sub.id)
+                set_created_at.delay(sub.id)
+
+        # super().save(*args, **kwargs)
 
         return super().save(*args, **kwargs)
 
@@ -68,5 +81,14 @@ class Subscription(models.Model):
         Service, related_name='subscriptions', on_delete=models.PROTECT)
     plan = models.ForeignKey(
         Plan, related_name='subscriptions', on_delete=models.PROTECT)
-    price = models.FloatField(blank=True, null=True)
+    price = models.FloatField(default=0)
     created_at = models.CharField(max_length=50, blank=True, null=True)
+
+    # рассчёт цены со скидкой при создании
+    def save(self, *args, **kwargs):
+        creating = not bool(self.id)
+        if creating:
+            set_price.delay(self.id)
+            set_created_at.delay(self.id)
+
+        return super().save(*args, **kwargs)
