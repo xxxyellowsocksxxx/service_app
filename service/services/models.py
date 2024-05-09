@@ -24,6 +24,7 @@ class Service(models.Model):
         self.__price = self.price
 
     def save(self, *args, **kwargs):
+        # проверка на существование элемента
         creating = not bool(self.id)
         if creating:
             return super().save(*args, **kwargs)
@@ -39,12 +40,12 @@ class Service(models.Model):
 
 # тарифные планы скидок
 class Plan(models.Model):
+    # список вариантов скидок
     PLAN_TYPES = (
         ('full', 'Full'),
         ('student', 'Student'),
         ('discount', 'Discount')
     )
-    # список типов подписки
     plan_type = models.CharField(choices=PLAN_TYPES, max_length=50)
     # максимальное значение = 100
     discount_percent = models.PositiveIntegerField(default=0,

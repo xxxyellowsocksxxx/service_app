@@ -1,4 +1,3 @@
-import time
 import datetime
 
 from celery_singleton import Singleton
@@ -23,7 +22,6 @@ def set_price(subscribtion_id):
 
         subscription.price = subscription.annotated_price
         # сохранение конкретно этого поля модели
-        # subscription.save()
         subscription.save(update_fields=['price'])
 
     cache.delete(settings.PRICE_CACHE_NAME)
@@ -34,11 +32,9 @@ def set_created_at(subscribtion_id):
     from services.models import Subscription
 
     with transaction.atomic():
-
         subscription = Subscription.objects.select_for_update().get(id=subscribtion_id)
         subscription.created_at = str(datetime.datetime.now())
         # сохранение конкретно этого поля модели
-        # subscription.save()
         subscription.save(update_fields=['created_at'])
 
     cache.delete(settings.PRICE_CACHE_NAME)
