@@ -21,12 +21,10 @@ def set_price(subscribtion_id):
             .annotate(annotated_price=F('service__price') - (F('service__price') * F('plan__discount_percent') / 100.00))\
             .first()
 
-        print(subscription, 'from set price')
-
         subscription.price = subscription.annotated_price
         # сохранение конкретно этого поля модели
-        subscription.save()
-        # subscription.save(update_fields=['price'])
+        # subscription.save()
+        subscription.save(update_fields=['price'])
 
     cache.delete(settings.PRICE_CACHE_NAME)
 
@@ -38,10 +36,9 @@ def set_created_at(subscribtion_id):
     with transaction.atomic():
 
         subscription = Subscription.objects.select_for_update().get(id=subscribtion_id)
-        print(subscription, 'from created at')
         subscription.created_at = str(datetime.datetime.now())
         # сохранение конкретно этого поля модели
-        subscription.save()
-        # subscription.save(update_fields=['created_at'])
+        # subscription.save()
+        subscription.save(update_fields=['created_at'])
 
     cache.delete(settings.PRICE_CACHE_NAME)

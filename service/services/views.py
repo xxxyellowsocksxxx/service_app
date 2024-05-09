@@ -28,8 +28,9 @@ class SubscriptionView(ReadOnlyModelViewSet):
 
         response = super().list(request, *args, **kwargs)
 
+        # получение данных из кеша
         price_cache = cache.get(settings.PRICE_CACHE_NAME)
-
+        # проверка на наличие данных, если их нет тогда они рассчитаются и туда попадут
         if price_cache:
             total_price = price_cache
         else:
@@ -40,7 +41,7 @@ class SubscriptionView(ReadOnlyModelViewSet):
         # дефолтные данные теперь нахоядятся тут, в списке объектов
         response_data = {'result': response.data}
         # рассчитывается сумма оплаченых подписок
-        response_data['total_cost_amoint'] = total_price
+        response_data['total_cost_amount'] = total_price
 
         response.data = response_data
 

@@ -41,6 +41,10 @@ INSTALLED_APPS = [
 
     'clients.apps.ClientsConfig',
     'services.apps.ServicesConfig',
+
+    'cachalot',
+    'rest_framework',
+
 ]
 
 MIDDLEWARE = [

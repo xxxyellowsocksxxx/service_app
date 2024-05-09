@@ -1,9 +1,13 @@
 from typing import Iterable
+
 from django.db import models
 from django.core.validators import MaxValueValidator
+from django.db.models.signals import post_delete
+
 
 from clients.models import Client
 from services.tasks import set_price, set_created_at
+from services.receivers import delete_cache_total_sum
 
 
 # услуги. названия и цены
@@ -14,16 +18,15 @@ class Service(models.Model):
     def __str__(self):
         return self.name
 
+    # запись стартового значения цены
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # запись стартового значения цены
         self.__price = self.price
 
     def save(self, *args, **kwargs):
         creating = not bool(self.id)
-        result = super().save(*args, **kwargs)
         if creating:
-            return result
+            return super().save(*args, **kwargs)
 
         # проверка на наличие изменений в цене
         if self.price != self.__price:
@@ -31,7 +34,7 @@ class Service(models.Model):
                 set_price.delay(sub.id)
                 set_created_at.delay(sub.id)
 
-        return result
+        return super().save(*args, **kwargs)
 
 
 # тарифные планы скидок
@@ -50,25 +53,22 @@ class Plan(models.Model):
     def __str__(self):
         return self.plan_type
 
+    # запись стартового значения процента скидки
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # запись стартового значения процента скидки
         self.__discount_percent = self.discount_percent
 
     def save(self, *args, **kwargs):
         # проверка на существование объекта
         creating = not bool(self.id)
-        # result = super().save(*args, **kwargs)
         if creating:
-            super().save(*args, **kwargs)
+            return super().save(*args, **kwargs)
 
         # проверка на наличие изменений в проценте скидки
         if self.discount_percent != self.__discount_percent:
             for sub in self.subscriptions.all():
                 set_price.delay(sub.id)
                 set_created_at.delay(sub.id)
-
-        # super().save(*args, **kwargs)
 
         return super().save(*args, **kwargs)
 
@@ -87,8 +87,12 @@ class Subscription(models.Model):
     # рассчёт цены со скидкой при создании
     def save(self, *args, **kwargs):
         creating = not bool(self.id)
+        result = super().save(*args, **kwargs)
         if creating:
             set_price.delay(self.id)
             set_created_at.delay(self.id)
 
-        return super().save(*args, **kwargs)
+        return result
+
+
+post_delete.connect(delete_cache_total_sum, sender=Subscription)

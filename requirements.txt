@@ -5,3 +5,4 @@ gunicorn
 celery[redis]
 flower
 celery_singleton
+django-cachalot
